@@ -11,8 +11,12 @@
 #define MAXLINE 100
 #define MOD "exit with CTR C"
 
+time_t startTime;
+int detach;
+
 int read_command(char* command, char* parameters[]) {
     int noParam = 0;
+    detach = 0;
 
     char cwd[100];
     getcwd(cwd, sizeof(cwd));
@@ -38,8 +42,29 @@ int read_command(char* command, char* parameters[]) {
     }
     parameters[noParam] = NULL;
 
+    if (strcmp(parameters[noParam-1], "&") == 0) {
+        detach = 1;
+        parameters[noParam-1] = NULL;
+        noParam--;
+    }
 
     return noParam;
+}
+
+void sigintHandler() {
+    time_t endTime = time(0);
+    double d = difftime(endTime, startTime);
+    int tmp = (int)d;
+
+    int h = tmp / 3600;
+    tmp -= h*3600;
+
+    int m = tmp / 60;
+    tmp -= m*60;
+
+    int s = tmp;
+
+    fprintf(stdout, "Time elapsed %dh, %dm, %ds (%f), ", h, m, s, d);
 }
 
 
@@ -50,11 +75,24 @@ int main(int argc, char *argv[]) {
     char *parameters[MAXLINE];
     int noParams;
 
+    signal(SIGINT, sigintHandler);
+    signal(SIGTERM, sigintHandler);
+
+    // save start time
+    startTime = time(NULL); // Get the system time
+
     while (1) {
         noParams = read_command(command, parameters); // read user input
         if (noParams == 0) {
             fprintf(stderr, "no command ?!\n");
             exit(1);
+        }
+
+        if (strcmp(command, "cd") == 0) {
+            if (chdir(parameters[1]) == -1) {
+                fprintf(stdout, "The specified directory is invalid!\n");
+            }
+            continue;
         }
 
         if ((childPid = fork()) == -1) { // create process
@@ -64,7 +102,11 @@ int main(int argc, char *argv[]) {
             execvp(command, parameters); // executes command
             exit(3);
         } else { // father
-            waitpid(childPid, &status, WUNTRACED | WCONTINUED);
+            if (detach == 0) {
+                waitpid(childPid, &status, WUNTRACED | WCONTINUED);
+            } else {
+                fprintf(stdout, "Child pid: %d\n", childPid);
+            }
         }
     }
 

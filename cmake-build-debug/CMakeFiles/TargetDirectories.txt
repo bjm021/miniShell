@@ -1,0 +1,3 @@
+/Users/b.jm021/CLionProjects/miniShell/cmake-build-debug/CMakeFiles/miniShell.dir
+/Users/b.jm021/CLionProjects/miniShell/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/b.jm021/CLionProjects/miniShell/cmake-build-debug/CMakeFiles/rebuild_cache.dir

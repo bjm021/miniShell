@@ -64,7 +64,18 @@ void sigintHandler() {
 
     int s = tmp;
 
-    fprintf(stdout, "Time elapsed %dh, %dm, %ds (%f), ", h, m, s, d);
+    fprintf(stdout, "\nTime elapsed %dh, %dm, %ds (%f)\n", h, m, s, d);
+    exit(1);
+}
+
+void handleChildExit(int signum)
+{
+    pid_t pid;
+    int   status;
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+    {
+        kill(pid, SIGINT);   // Or whatever you need to do with the PID
+    }
 }
 
 
@@ -77,6 +88,8 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, sigintHandler);
     signal(SIGTERM, sigintHandler);
+
+    signal(SIGCHLD, handleChildExit);
 
     // save start time
     startTime = time(NULL); // Get the system time
